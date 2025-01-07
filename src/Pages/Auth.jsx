@@ -1,92 +1,124 @@
 import { PawPrint } from "lucide-react";
 import React, { useState } from "react";
-import { registerAPI } from "../../Services/allAPI";
-
+import { loginAPI, registerAPI } from "../../Services/allAPI";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
-  // State to toggle between Sign-Up and Log-In forms
-  const [isSignUp, setIsSignUp] = useState(true);
-  // State to capture the selected role during sign-up
-  const [role, setRole] = useState(null);
-  const [isLoading,setIsLoading] = useState(false)
+  const navigate = useNavigate();
 
-  // Handle role selection for sign-up
+  const [isSignUp, setIsSignUp] = useState(true); // Toggle Sign-Up and Log-In forms
+  const [role, setRole] = useState(null); // Capture selected role
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(false);
+
+  const [userInput, setUserInput] = useState({
+    username: "",
+    email: "",
+    password: ""
+  });
+  console.log(userInput);
+  
+
+  // Role selection handler
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
+    console.log(`Role Selected: ${selectedRole}`);
   };
 
-  const [userInput,setUserInput] = useState({
-    username:"",email:"",password:""
-  })
- console.log(userInput);
- 
+  // Sign-Up API Call
+  const register = async (e) => {
+    e.preventDefault();
+    if (userInput.username && userInput.password && userInput.email && role) {
+        try {
+            setIsLoading(true);
 
-  const register =  async (e)=>{
-    e.preventDefault()
-    if(userInput.username && userInput.password && userInput.email && role){
-      
-      //api call
-      try{
-        const result = await registerAPI({...userInput,role})
-        setIsLoading(true);
-        if(result.status == 200){
-          alert(`Welcome ${result.data?.username},Please login to explore our Projects`);
-          navigate('/login')
-          setUserInput({username:"",email:"",password:""});
-          setRole(null)
-        }else{
-          if(result.response.status == 406){
-            alert(result.response.data)
-            setUserInput({username:"" , email:"",password:""})
-          }
-  
+            console.log("Request Body:", { ...userInput, role });
+            const result = await registerAPI({ ...userInput, role });
+            console.log("Registration Result:", result);  // Add a log for debugging
+
+            if (result && result.status === 200) {  // Ensure result is defined before checking status
+                alert(`Welcome ${result.data?.username}, Please log in to explore our Projects`);
+                setIsSignUp(false); // Switch to Log-In
+                setRole(null); // Reset role
+                setUserInput({ username: "", email: "", password: "" }); // Reset fields
+            } else {
+                alert(result?.response?.data || "Registration failed.");
+            }
+        } catch (err) {
+            console.error("Error during registration:", err);  // Log the error for debugging
+            alert("An error occurred during registration. Please try again.");
+        } finally {
+            setIsLoading(false);
         }
-  
-      }catch(err){
-        setIsLoading(false)
-        console.log(err);
-        alert("An error Occured while Registering")
-      }
-  
-    }else{
-      alert("Please fill the form completely !!! ")
+    } else {
+        alert("Please fill out all fields, including selecting a role!");
     }
-  }
+};
+
+
+  // Log-In API Call
+  const login = async (e) => {
+    e.preventDefault();
+    if (userInput.password && userInput.email && role) { // Ensure role is selected
+      try {
+        setIsLogin(true);
+        const result = await loginAPI({ ...userInput, role }); // Pass role directly
+        if (result && result.status === 200) {
+          sessionStorage.setItem("user", JSON.stringify(result.data.user));
+          sessionStorage.setItem("token", result.data.token);
+        
+          
+  
+          // Navigate based on role
+          if (result.data.user.role === "owner") {
+            navigate("/dashboard/owner");
+          } else if (result.data.user.role === "provider") {
+            navigate("/dashboard/provider");
+          } else {
+            alert("Unknown role. Unable to navigate.");
+          }
+        }
+      } catch (err) {
+        alert("Login failed. Check your credentials and selected role.");
+      } finally {
+        setIsLogin(false);
+      }
+    } else {
+      alert("Please fill all fields, including selecting a role.");
+    }
+  };
   
 
   return (
-    <div className="flex h-screen  items-center justify-center bg-gray-200">
-      {/* Container */}
-      <div className="flex flex-col  md:flex-row w-11/12 max-w-4xl shadow-2xl ">
+    <div className="flex h-screen items-center justify-center bg-gray-200">
+      <div className="flex flex-col md:flex-row w-11/12 max-w-4xl shadow-2xl">
         {/* Left Section - Form */}
         <div className="w-full md:w-1/2 bg-white p-6 md:p-10">
-          {/* Logo */}
           <div className="mb-6 flex justify-center md:justify-start">
-          <PawPrint size={20} />
+            <PawPrint size={20} />
             <h1 className="text-3xl font-bold text-indigo-600">
               Pet<span className="text-indigo-800">Club</span>
             </h1>
           </div>
 
-          {/* Form Header */}
           <h2 className="mb-6 text-2xl font-semibold text-gray-700 text-center md:text-left">
             {isSignUp ? "Sign Up" : "Log In"}
           </h2>
-   
-          {/* Sign-Up Role Selection */}
+
+          {/* Role Selection */}
           {isSignUp && !role && (
             <div className="space-y-4 mb-6">
-              <p className="text-lg text-gray-600">Select your role:</p>
+              <p className="text-lg text-gray-600 text-center">Select your role:</p>
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={() => handleRoleSelect("owner")}
-                  className="w-1/2 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-800 hover:shadow-xl"
+                  className="w-1/2 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-800 hover:shadow-xl transition-transform"
                 >
                   Owner
                 </button>
                 <button
                   onClick={() => handleRoleSelect("provider")}
-                  className="w-1/2 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-800 hover:shadow-xl"
+                  className="w-1/2 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-800 hover:shadow-xl transition-transform"
                 >
                   Provider
                 </button>
@@ -94,13 +126,13 @@ const Auth = () => {
             </div>
           )}
 
-          {/* Form */}
+          {/* Sign-Up Form */}
           {isSignUp && role && (
             <form className="mt-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-600">Username</label>
                 <input
-                  onChange={e=>setUserInput({...userInput,username:e.target.value})}
+                  onChange={(e) => setUserInput({ ...userInput, username: e.target.value })}
                   value={userInput.username}
                   type="text"
                   placeholder="Username"
@@ -110,8 +142,8 @@ const Auth = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-600">Email</label>
                 <input
-                   onChange={e=>setUserInput({...userInput,email:e.target.value})}
-                   value={userInput.email}
+                  onChange={(e) => setUserInput({ ...userInput, email: e.target.value })}
+                  value={userInput.email}
                   type="email"
                   placeholder="Your Email"
                   className="w-full rounded-lg border border-gray-300 p-2"
@@ -120,8 +152,8 @@ const Auth = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-600">Password</label>
                 <input
-                 onChange={e=>setUserInput({...userInput,password:e.target.value})}
-                 value={userInput.password}
+                  onChange={(e) => setUserInput({ ...userInput, password: e.target.value })}
+                  value={userInput.password}
                   type="password"
                   placeholder="Your Password"
                   className="w-full rounded-lg border border-gray-300 p-2"
@@ -130,47 +162,80 @@ const Auth = () => {
               <button
                 onClick={register}
                 className={`w-full rounded-lg shadow-md bg-indigo-600 py-2 text-white transition-transform ${
-                    isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-indigo-800 hover:-translate-y-1"
+                  isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-indigo-800 hover:-translate-y-1"
                 }`}
                 disabled={isLoading}
-            >
-                {isLoading ? "Signing Up..." : isSignUp ? "Sign Up" : "Log In"}
-            </button>
-            </form>
-          )}
-
-          {/* Login Form */}
-          {!isSignUp && (
-            <form className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Email</label>
-                <input
-                  type="email"
-                  placeholder="Your Email"
-                  className="w-full rounded-lg border border-gray-300 p-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Password</label>
-                <input
-                  type="password"
-                  placeholder="Your Password"
-                  className="w-full rounded-lg border border-gray-300 p-2"
-                />
-              </div>
-              <button className="w-full rounded-lg shadow-md bg-indigo-600 py-2 text-white transition-transform hover:bg-indigo-800 hover:-translate-y-1 hover:shadow-2xl hover:transition-all active:-translate-y-0">
-                Log In
+              >
+                {isLoading ? "Signing Up..." : "Sign Up"}
               </button>
             </form>
           )}
 
-          {/* Switch Between Forms */}
+          {/* Log-In Form */}
+          {!isSignUp && (
+  <form className="mt-4 space-y-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-600">Email</label>
+      <input
+        onChange={(e) => setUserInput({ ...userInput, email: e.target.value })}
+        value={userInput.email}
+        type="email"
+        placeholder="Your Email"
+        className="w-full rounded-lg border border-gray-300 p-2"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-600">Password</label>
+      <input
+        onChange={(e) => setUserInput({ ...userInput, password: e.target.value })}
+        value={userInput.password}
+        type="password"
+        placeholder="Your Password"
+        className="w-full rounded-lg border border-gray-300 p-2"
+      />
+    </div>
+    <div>
+      <p className="block text-sm font-medium text-gray-600 mb-2">Select your role:</p>
+      <div className="flex justify-center space-x-4">
+        <button
+          type="button"
+          onClick={() => handleRoleSelect("owner")}
+          className={`w-1/2 py-2 rounded-lg shadow-md ${
+            role === "owner" ? "bg-indigo-800 text-white" : "bg-gray-200"
+          }`}
+        >
+          Owner
+        </button>
+        <button
+          type="button"
+          onClick={() => handleRoleSelect("provider")}
+          className={`w-1/2 py-2 rounded-lg shadow-md ${
+            role === "provider" ? "bg-indigo-800 text-white" : "bg-gray-200"
+          }`}
+        >
+          Provider
+        </button>
+      </div>
+    </div>
+    <button
+      onClick={login}
+      className={`w-full rounded-lg shadow-md bg-indigo-600 py-2 text-white transition-transform ${
+        isLogin ? "opacity-50 cursor-not-allowed" : "hover:bg-indigo-800 hover:-translate-y-1"
+      }`}
+      disabled={isLogin}
+    >
+      {isLogin ? "Logging In..." : "Log In"}
+    </button>
+  </form>
+)}
+
+
           <p className="mt-4 text-center text-sm text-gray-500">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <span
-              onClick={() =>{
-               setIsSignUp(!isSignUp)
-                setRole(null);
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setRole(null); // Reset role on form switch
               }}
               className="cursor-pointer text-indigo-600 hover:underline"
             >
@@ -186,22 +251,21 @@ const Auth = () => {
             <p className="mb-6 text-lg text-gray-700">
               All the Lorem Ipsum generators on the Internet tend to repeat.
             </p>
-            {/* Images */}
             <div className="flex space-x-5">
               <img
                 className="h-28 w-28 rounded-full object-cover"
                 src="https://img.freepik.com/premium-photo/photo-shocked-cute-dog-face-solid-color-background-ai-generative_407474-14450.jpg"
-                alt="Image 1"
+                alt="Dog"
               />
               <img
                 className="h-28 w-28 rounded-full object-cover"
-                src="https://img.freepik.com/premium-photo/ginger-cat-looking-up-with-wide-green-eyes-cat-has-long-white-whiskers-pink-nose-background-is-solid-light-orange-color_14117-219029.jpg?w=360"
-                alt="Image 2"
+                src="https://img.freepik.com/premium-photo/ginger-cat-looking-up-with-wide-green-eyes-cat-has-long-white-whiskers-pink-nose-background-is-solid-light-orange-color_14117-219029.jpg"
+                alt="Cat"
               />
               <img
                 className="h-28 w-28 rounded-full object-cover"
                 src="https://www.shutterstock.com/image-photo/funny-hungry-australian-shepherd-puppy-600nw-2475379251.jpg"
-                alt="Image 3"
+                alt="Puppy"
               />
             </div>
           </div>

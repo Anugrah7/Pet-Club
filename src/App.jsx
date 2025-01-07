@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import './App.css'
 import {  Route, Routes } from 'react-router-dom'
 import Home from './Pages/Home'
@@ -12,10 +12,12 @@ import ProviderDashboard from './Pages/ProviderDashboard'
 import MyServices from './Components/Provider/MyServices'
 import Bookings from './Components/Provider/Bookings'
 import Notifications from './Components/Provider/Notifications'
+// import { tokenContext } from './context/TokenAuth'
+
 
 
 function App() {
-const[loggedIn,setLoggedIn] = useState(false)
+  // const {authorizedUser,setAuthorizedUser} = useContext(tokenContext)
 
   return (
     <>
@@ -23,15 +25,19 @@ const[loggedIn,setLoggedIn] = useState(false)
    <Routes>
         <Route path='/' element={<Home/>} />
         <Route path='/auth' element ={<Auth/>}/>
-        <Route path='/dashboard/owner' element ={<OwnerDashboard/>}/>
-        <Route path='/pets' element ={<PetDetails/>}/>
-        <Route path='/appointments' element ={<AppointmentDetail/>}/>
-        <Route path='/community'element={<CommunityPage />}/>
-        <Route path='/notifications'element={<NotificationsPage />}/>
-        <Route path='/dashboard/provider'element={<ProviderDashboard />}/>
-        <Route path='/myservices'element={<MyServices />}/>
-        <Route path='/booking'element={<Bookings />}/>
-        <Route path='/notification-provider'element={<Notifications />}/>
+        
+          <>
+            <Route path='/dashboard/owner' element ={<OwnerDashboard/>}/>
+            <Route path='/pets' element ={<PetDetails/>}/>
+            <Route path='/appointments' element ={<AppointmentDetail/>}/>
+            <Route path='/community'element={<CommunityPage />}/>
+            <Route path='/notifications'element={<NotificationsPage />}/>
+            <Route path='/dashboard/provider'element={<ProviderDashboard />}/>
+            <Route path='/myservices'element={<MyServices />}/>
+            <Route path='/booking'element={<Bookings />}/>
+            <Route path='/notification-provider'element={<Notifications />}/>
+          </>
+        
    </Routes>
     </>
   )

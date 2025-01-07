@@ -1,24 +1,81 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Upload } from 'lucide-react';
+import { addPetAPI } from '../../../Services/allAPI';
 
-function AddPetModal({ isOpen, onClose, onSubmit }) {
+function AddPetModal({ isOpen, onClose, fetchPets }) {
   const [petData, setPetData] = useState({
     name: '',
     type: '',
     age: '',
     medicalHistory: '',
-    image: null,
+    petImage: '' // File object
   });
+  const [imagePreview, setImagePreview] = useState(null);
 
-  if (!isOpen) return null;
+  const handleAddPet = async () => {
+    const { name, type, age, medicalHistory } = petData;
+    const image = localStorage.getItem('petImage');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(petData);
-    onClose();
+    if (name && type && age && medicalHistory && image) {
+      const reqBody = new FormData();
+      reqBody.append('petName', name);
+      reqBody.append('petType', type);
+      reqBody.append('age', age);
+      reqBody.append('medicalHistory', medicalHistory);
+      reqBody.append('petImage', image);
+
+      const token = sessionStorage.getItem('token');
+      if (token) {
+        const reqHeader = {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`,
+        };
+
+        try {
+          console.log('Request Body:', reqBody);
+          if (!image) {
+            console.error('Image file is missing');
+            alert('Please upload a photo.');
+            return;
+          }          
+          const result = await addPetAPI(reqBody, reqHeader);
+          console.log('API Response:', result);
+
+          if (result.status === 200 || result.status === 201) {
+            alert(`${result?.data?.pet?.petName} added successfully!`);
+
+            // Call fetchPets to refresh the pet list in OwnerDashboard
+            fetchPets();  // Now fetchPets is available here
+
+            // Reset the form and close the modal
+            setPetData({
+              name: '',
+              type: '',
+              age: '',
+              medicalHistory: '',
+              petImage: ''
+            });
+            setImagePreview(null);
+            localStorage.removeItem('petImage');
+            onClose(); // Close the modal
+          } else {
+            alert('Failed to add the pet. Please try again.');
+          }
+        } catch (err) {
+          console.error('Error adding pet:', err);
+          alert('An error occurred. Please check your input or try again later.');
+        }
+      } else {
+        alert('Authentication failed. Please log in again.');
+      }
+    } else {
+      alert('Please fill in all fields and upload a photo.');
+    }
   };
 
-  return (
+ 
+
+  return isOpen ? (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-6">
@@ -28,10 +85,14 @@ function AddPetModal({ isOpen, onClose, onSubmit }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4">
+          {/* Pet Name Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pet Name</label>
+            <label htmlFor="pet-name" className="block text-sm font-medium text-gray-700 mb-1">
+              Pet Name
+            </label>
             <input
+              id="pet-name"
               type="text"
               className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
               value={petData.name}
@@ -40,9 +101,13 @@ function AddPetModal({ isOpen, onClose, onSubmit }) {
             />
           </div>
 
+          {/* Pet Type Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pet Type</label>
+            <label htmlFor="pet-type" className="block text-sm font-medium text-gray-700 mb-1">
+              Pet Type
+            </label>
             <select
+              id="pet-type"
               className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
               value={petData.type}
               onChange={(e) => setPetData({ ...petData, type: e.target.value })}
@@ -56,9 +121,13 @@ function AddPetModal({ isOpen, onClose, onSubmit }) {
             </select>
           </div>
 
+          {/* Pet Age Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+            <label htmlFor="pet-age" className="block text-sm font-medium text-gray-700 mb-1">
+              Age
+            </label>
             <input
+              id="pet-age"
               type="number"
               className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
               value={petData.age}
@@ -67,52 +136,68 @@ function AddPetModal({ isOpen, onClose, onSubmit }) {
             />
           </div>
 
+          {/* Medical History Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Medical History</label>
+            <label htmlFor="medical-history" className="block text-sm font-medium text-gray-700 mb-1">
+              Medical History
+            </label>
             <textarea
+              id="medical-history"
               className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
               value={petData.medicalHistory}
               onChange={(e) => setPetData({ ...petData, medicalHistory: e.target.value })}
               rows={3}
+              required
             />
           </div>
 
+          {/* Pet Photo Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Pet Photo</label>
+            <label htmlFor="pet-photo" className="block text-sm font-medium text-gray-700 mb-1">
+              Pet Photo
+            </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
               <input
                 type="file"
                 accept="image/*"
                 className="hidden"
                 id="pet-photo"
-                onChange={(e) => setPetData({ ...petData, image: e.target.files?.[0] || null })}
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    console.log('Selected file:', file);
+                    localStorage.setItem('petImage', file);
+                    setImagePreview(URL.createObjectURL(file));
+                    console.log('Selected file URL:', image);
+                  }
+                }}
               />
-              <label htmlFor="pet-photo" className="cursor-pointer">
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-1 text-sm text-gray-600">Click to upload or drag and drop</p>
+              <label htmlFor="pet-photo" className="cursor-pointer text-indigo-500">
+                <Upload size={24} />
+                <span>Upload Photo</span>
               </label>
             </div>
+            {imagePreview && (
+              <div className="mt-4">
+                <img src={imagePreview} alt="Pet preview" className="w-32 h-32 object-cover rounded-lg" />
+              </div>
+            )}
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
-            >
-              Add Pet
-            </button>
-          </div>
+          <button
+            onClick={(e) => {
+              e.preventDefault(); // Prevent form submission
+              handleAddPet();  // Call handleAddPet to submit the form
+            }}
+            type="button"
+            className="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            Add Pet
+          </button>
         </form>
       </div>
     </div>
-  );
+  ) : null;
 }
 
 export default AddPetModal;
