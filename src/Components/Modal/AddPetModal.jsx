@@ -9,9 +9,11 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
     age: '',
     medicalHistory: '',
     petImage: '' // File object
-  });
+  })
   const [imagePreview, setImagePreview] = useState(null);
-
+  console.log(imagePreview)
+  const [loading, setloading] = useState(false);
+  
   const handleAddPet = async () => {
     const { name, type, age, medicalHistory } = petData;
     const image = localStorage.getItem('petImage');
@@ -22,7 +24,7 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
       reqBody.append('petType', type);
       reqBody.append('age', age);
       reqBody.append('medicalHistory', medicalHistory);
-      reqBody.append('petImage', image);
+      reqBody.append('petImage', image)
 
       const token = sessionStorage.getItem('token');
       if (token) {
@@ -71,9 +73,34 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
     } else {
       alert('Please fill in all fields and upload a photo.');
     }
-  };
+  }
 
+
+
+  const handleImage = async(event) => {
+    setloading(true)
+    const file = event.target.files[0]
+    console.log("File uploaded:", event.target.files)
+    if(!file) return 
+    const data = new FormData()
+    console.log("mm",file)
+    
+    data.append("file",file)
+    data.append("upload_preset","ml_default")
+    data.append("cloud_name","dybaof8hd")
+
+    const res =  await fetch("https://api.cloudinary.com/v1_1/dybaof8hd/image/upload",{
+      method:"POST",
+      body:data
+    })
+
+    const uploadedImageUrl = await res.json()
+    console.log("hi heloooo",uploadedImageUrl.url);
+    setImagePreview(uploadedImageUrl.url) 
+    setloading(false)
+  }
  
+  
 
   return isOpen ? (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -162,26 +189,29 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
                 accept="image/*"
                 className="hidden"
                 id="pet-photo"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    console.log('Selected file:', file);
-                    localStorage.setItem('petImage', file);
-                    setImagePreview(URL.createObjectURL(file));
-                    console.log('Selected file URL:', image);
-                  }
-                }}
+                onChange={handleImage}
               />
               <label htmlFor="pet-photo" className="cursor-pointer text-indigo-500">
                 <Upload size={24} />
                 <span>Upload Photo</span>
               </label>
             </div>
-            {imagePreview && (
-              <div className="mt-4">
-                <img src={imagePreview} alt="Pet preview" className="w-32 h-32 object-cover rounded-lg" />
-              </div>
-            )}
+
+            {loading ? (
+                <div className="mt-4 text-indigo-500">
+                  <span>Loading...</span> {/* Replace this with a spinner if needed */}
+                </div>
+              ) : (
+                imagePreview && (
+                  <div className="mt-4">
+                    <img
+                      src={imagePreview}
+                      alt="Pet preview"
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                  </div>
+                )
+              )}
           </div>
 
           <button
@@ -195,6 +225,8 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
             Add Pet
           </button>
         </form>
+      </div>
+      <div>
       </div>
     </div>
   ) : null;
