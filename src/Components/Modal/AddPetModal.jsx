@@ -11,18 +11,19 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
     petImage: '' // File object
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isImageUploaded, setIsImageUploaded] = useState(false);
 
   const handleAddPet = async () => {
-    const { name, type, age, medicalHistory } = petData;
-    const image = localStorage.getItem('petImage');
+    const { name, type, age, medicalHistory, petImage } = petData;
 
-    if (name && type && age && medicalHistory && image) {
+    if (name && type && age && medicalHistory && isImageUploaded) {
       const reqBody = new FormData();
       reqBody.append('petName', name);
       reqBody.append('petType', type);
       reqBody.append('age', age);
       reqBody.append('medicalHistory', medicalHistory);
-      reqBody.append('petImage', image);
+      reqBody.append('petImage', petImage);
 
       const token = sessionStorage.getItem('token');
       if (token) {
@@ -33,11 +34,7 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
 
         try {
           console.log('Request Body:', reqBody);
-          if (!image) {
-            console.error('Image file is missing');
-            alert('Please upload a photo.');
-            return;
-          }          
+
           const result = await addPetAPI(reqBody, reqHeader);
           console.log('API Response:', result);
 
@@ -45,7 +42,8 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
             alert(`${result?.data?.pet?.petName} added successfully!`);
 
             // Call fetchPets to refresh the pet list in OwnerDashboard
-            fetchPets();  // Now fetchPets is available here
+            // fetchPets(); 
+             // Now fetchPets is available here
 
             // Reset the form and close the modal
             setPetData({
@@ -56,7 +54,6 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
               petImage: ''
             });
             setImagePreview(null);
-            localStorage.removeItem('petImage');
             onClose(); // Close the modal
           } else {
             alert('Failed to add the pet. Please try again.');
@@ -73,7 +70,69 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
     }
   };
 
- 
+  const handleImage = async (event) => {
+    setLoading(true);
+    const file = event.target.files[0];
+    console.log("File uploaded:", event.target.files);
+    if (!file) return;
+    const data = new FormData();
+    console.log("mm", file);
+
+    data.append("file", file);
+    data.append("upload_preset", "ml_default");
+    data.append("cloud_name", "dybaof8hd");
+
+    const res = await fetch("https://api.cloudinary.com/v1_1/dybaof8hd/image/upload", {
+      method: "POST",
+      body: data
+    });
+
+
+    const uploadedImageUrl = await res.json();
+    console.log("hi heloooo", uploadedImageUrl.url);
+    setPetData({ ...petData, petImage: uploadedImageUrl.url });
+    setImagePreview(uploadedImageUrl.url);
+    setIsImageUploaded(true);
+    setLoading(false);
+  };
+
+  useEffect(()=>{
+    // getPetAPI();
+    },[] ) 
+    const getPetAPI = async () => {
+   
+  
+      const token = sessionStorage.getItem('token');
+      if (token) {
+        const reqHeader = {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`,
+        };
+
+        try {
+
+          const result = await addPetAPI( reqHeader);
+          console.log('API Response:', result);
+
+          if (result.status === 200 || result.status === 201) {
+            result.data.forEach((index,pet) => {
+              <PetCard key={index} pet={pet} />
+            }
+            );
+
+          
+          } else {
+            alert('Failed to add the pet. Please try again.');
+          }
+        } catch (err) {
+          console.error('Error adding pet:', err);
+          alert('An error occurred. Please check your input or try again later.');
+        }
+      } else {
+        alert('Authentication failed. Please log in again.');
+      }
+    }
+  
 
   return isOpen ? (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -162,26 +221,29 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
                 accept="image/*"
                 className="hidden"
                 id="pet-photo"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    console.log('Selected file:', file);
-                    localStorage.setItem('petImage', file);
-                    setImagePreview(URL.createObjectURL(file));
-                    console.log('Selected file URL:', image);
-                  }
-                }}
+                onChange={handleImage}
               />
               <label htmlFor="pet-photo" className="cursor-pointer text-indigo-500">
                 <Upload size={24} />
                 <span>Upload Photo</span>
               </label>
             </div>
-            {imagePreview && (
-              <div className="mt-4">
-                <img src={imagePreview} alt="Pet preview" className="w-32 h-32 object-cover rounded-lg" />
-              </div>
-            )}
+
+            {loading ? (
+                <div className="mt-4 text-indigo-500">
+                  <span>Loading...</span> {/* Replace this with a spinner if needed */}
+                </div>
+              ) : (
+                imagePreview && (
+                  <div className="mt-4">
+                    <img
+                      src={imagePreview}
+                      alt="Pet preview"
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                  </div>
+                )
+              )}
           </div>
 
           <button
@@ -190,7 +252,7 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
               handleAddPet();  // Call handleAddPet to submit the form
             }}
             type="button"
-            className="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className={`w-full py-2 px-4 text-white rounded-lg ${isImageUploaded ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600'}`}
           >
             Add Pet
           </button>

@@ -5,7 +5,7 @@ import AddPetModal from '../Modal/AddPetModal';
 
 function PetsSection({ pets = [], setPets, fetchPets }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  console.log("pet length",pets.length)
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -30,7 +30,7 @@ function PetsSection({ pets = [], setPets, fetchPets }) {
       <AddPetModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        fetchPets={fetchPets} // Pass fetchPets to the modal so it can refresh the list
+        fetchPets={fetchPets} 
       />
     </div>
   );

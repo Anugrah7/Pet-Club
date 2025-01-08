@@ -1,21 +1,33 @@
 import React, { useState } from 'react';
+import { addBookingAPI } from '../../../Services/allAPI';
 
-function BookAppointment({ providers = [], services = [], onSubmit }) {
+function BookAppointment({ providers = [], services = [],  }) {
   const [selectedService, setSelectedService] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
 
-  const handleSubmit = () => {
+  const   handleSubmit  = async () => {
     const appointment = {
       service: selectedService,
       provider: selectedProvider,
-      date: selectedDate,
+      date: new Date(`${selectedDate}T${selectedTime}:00.000Z`).toISOString(),
       time: selectedTime,
+      bookingStatus: 0
     };
+const token = sessionStorage.getItem('token');
 
-    // Pass the appointment data to parent for saving in the backend or state
-    onSubmit(appointment);
+    const reqHeader = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+    const result = await addBookingAPI(appointment,reqHeader); 
+
+    if (result.status === 200 || result.status === 201) {
+      alert('Appointment booked successfully!');
+    } else {
+      alert('Failed to book appointment. Please try again.');
+    }
   };
 
   // Define available services (this can come from props or backend)

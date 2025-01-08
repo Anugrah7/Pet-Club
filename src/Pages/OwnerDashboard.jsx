@@ -20,6 +20,7 @@ function OwnerDashboard() {
       console.log('Pets response:', response);
       if (response?.status === 200) {
         setPets(response.data.pets);  // Update the pets list after fetching
+        console.log("pets length in parent component",response.data.pets.length)
       } else {
         console.error('Failed to fetch pets',response);
       }

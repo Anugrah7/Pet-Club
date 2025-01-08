@@ -1,27 +1,50 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { getBookingAPI } from '../../../Services/allAPI';
+import { use } from 'react';
 
 function Bookings() {
-  const bookings = [
-    {
-      id: 1,
-      ownerName: 'John Doe',
-      petName: 'Max',
-      service: 'Dog Grooming',
-      date: '2024-12-20',
-      time: '10:00 AM',
-      status: 'Pending',
-    },
-    {
-      id: 2,
-      ownerName: 'Jane Smith',
-      petName: 'Bella',
-      service: 'Routine Check-up',
-      date: '2024-12-22',
-      time: '2:00 PM',
-      status: 'Confirmed',
-    },
-  ];
+  const [bookings, setBookings] = React.useState([]);
+  // const bookings = [
+  //   {
+  //     id: 1,
+  //     ownerName: 'John Doe',
+  //     petName: 'Max',
+  //     service: 'Dog Grooming',
+  //     date: '2024-12-20',
+  //     time: '10:00 AM',
+  //     status: 'Pending',
+  //   },
+  //   {
+  //     id: 2,
+  //     ownerName: 'Jane Smith',
+  //     petName: 'Bella',
+  //     service: 'Routine Check-up',
+  //     date: '2024-12-22',
+  //     time: '2:00 PM',
+  //     status: 'Confirmed',
+  //   },
+  // ];
 
+  const getBookingData = async () => {
+    // Fetch booking data from the backend
+    const token = sessionStorage.getItem('token');
+    const reqHeader = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+    const reqBody = {
+      username : sessionStorage.getItem("user").username
+    };
+    const result = await getBookingAPI(reqBody,reqHeader);
+    if (result.status === 200) {
+      setBookings(result.data);
+    } else {
+      console.error('Failed to fetch bookings:', result);
+    }
+  }
+  useEffect(() => {
+    getBookingData();
+  },[]);
   const handleAction = (id, action) => {
     console.log(`Booking ${id} has been ${action}.`); // Placeholder logic
   };
