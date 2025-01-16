@@ -3,9 +3,11 @@ import { PlusCircle } from 'lucide-react';
 import PetCard from './PetCard'; // Assuming PetCard is a separate component
 import AddPetModal from '../Modal/AddPetModal';
 
-function PetsSection({ pets = [], setPets, fetchPets }) {
+function PetsSection({ pets = [], fetchPets }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  console.log("pet length",pets.length)
+  console.log("pet length", pets.length);
+  console.log("Pets in PetsSection:", pets);
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -23,7 +25,7 @@ function PetsSection({ pets = [], setPets, fetchPets }) {
           <p>No pets added yet. Click "Add Pet" to get started.</p>
         ) : (
           pets.map((pet) => (
-            <PetCard key={pet.petId} pet={pet} />
+            <PetCard key={pet.petId} pet={pet} fetchPets={fetchPets} />
           ))
         )}
       </div>

@@ -10,7 +10,7 @@ import {
 import { Link } from 'react-router-dom';
 
 
-export const sidebarContent = {
+export const sidebarContent = (pets = [])=>({
   dashboard: {
     icon: <Home size={20} />,
     label:(
@@ -23,10 +23,18 @@ export const sidebarContent = {
   pets: {
     icon: <PawPrint size={20} />,
     label:(
-        <Link to="/pets" className="text-white hover:text-amber-200">
-        My Pets
-      </Link>
-    ),
+      <div>
+        {pets.map((pet) => (
+          <Link
+            to={`/pets/${pet.petId}`}  // This passes the petId to the URL
+            key={pet.petId}
+            className="block text-white hover:text-amber-200"
+          >
+            {pet.petName || "My Pet"} {/* Display pet's name */}
+          </Link>
+        ))}
+      </div>
+    ) 
   },
   appointments: {
     icon: <Calendar size={20} />,
@@ -56,4 +64,4 @@ export const sidebarContent = {
    
   }
  
-};
+});

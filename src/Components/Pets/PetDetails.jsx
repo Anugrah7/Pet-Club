@@ -1,8 +1,23 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import { Calendar, Stethoscope, Syringe, Clock } from 'lucide-react';
 import Sidebar from '../Sidebar/Sidebar';
 
-function PetDetails({ pet }) {
+
+function PetDetails({ pets =[]}) {
+  const { petId } = useParams(); // Extract petId from URL
+
+  // Find the pet by petId
+  const pet = pets.find((pet) => pet.petId === petId);
+
+  if (!pet) {
+    return (
+      <div className="flex min-h-screen bg-gray-100">
+        <p className="text-gray-600 text-center mt-10 w-full">Pet not found.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -18,17 +33,14 @@ function PetDetails({ pet }) {
             <div className="md:w-1/3">
               <div className="relative group">
                 <img
-                  src="https://patmypets.com/wp-content/uploads/elementor/thumbs/Pomeranian-Pom-Dog-Breed-Information-Characteristics-Price-qk85w1ro5me8ayocfcc157ftvxdzvrjj0gqxp6igze.png"
+                  src={pet?.petImage || 'https://example.com/default-image.png'} // Use pet's image
                   alt="Pet"
                   className="w-full h-96 object-cover rounded-2xl shadow-md transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 rounded-b-2xl">
                   <h2 className="text-2xl font-bold text-white">
-                    {pet?.name || 'Pomeranian'}
+                    {pet?.petName || 'Unknown Pet'}
                   </h2>
-                  <p className="text-gray-200">
-                    {pet?.breed || 'Small Breed'}
-                  </p>
                 </div>
               </div>
             </div>
@@ -46,14 +58,14 @@ function PetDetails({ pet }) {
                       <Clock size={20} />
                       <span className="font-medium">Age</span>
                     </div>
-                    <p className="text-gray-700">{pet?.age || '2'} years old</p>
+                    <p className="text-gray-700">{pet?.age || 'Unknown Age'}</p>
                   </div>
                   <div className="bg-gray-50 p-5 rounded-lg shadow-sm hover:shadow-md transition duration-300">
                     <div className="flex items-center gap-2 text-indigo-600 mb-2">
                       <Calendar size={20} />
                       <span className="font-medium">Next Checkup</span>
                     </div>
-                    <p className="text-gray-700">{pet?.nextCheckup || 'March 15, 2024'}</p>
+                    <p className="text-gray-700">{pet?.nextCheckup || 'TBD'}</p>
                   </div>
                 </div>
               </div>
@@ -104,38 +116,7 @@ function PetDetails({ pet }) {
                           </div>
                         </div>
                       ))
-                    : [
-                        {
-                          name: 'Rabies',
-                          date: '2023-12-10',
-                          nextDue: '2024-12-10',
-                        },
-                        {
-                          name: 'DHPP',
-                          date: '2023-11-15',
-                          nextDue: '2024-11-15',
-                        },
-                      ].map((vaccine, index) => (
-                        <div
-                          key={index}
-                          className="bg-gray-50 p-5 rounded-lg flex justify-between items-center hover:bg-gray-100 transition duration-300"
-                        >
-                          <div>
-                            <p className="font-medium text-gray-800">
-                              {vaccine.name}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Last: {vaccine.date}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-500">Next due:</p>
-                            <p className="text-sm font-semibold text-indigo-600">
-                              {vaccine.nextDue}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                    : 'No vaccination history available.'}
                 </div>
               </div>
             </div>

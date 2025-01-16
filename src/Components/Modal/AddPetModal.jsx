@@ -2,136 +2,100 @@ import React, { useEffect, useState } from 'react';
 import { X, Upload } from 'lucide-react';
 import { addPetAPI } from '../../../Services/allAPI';
 
-function AddPetModal({ isOpen, onClose, fetchPets }) {
+function AddPetModal({ isOpen, onClose }) {
   const [petData, setPetData] = useState({
     name: '',
     type: '',
     age: '',
     medicalHistory: '',
     petImage: '' // File object
-  });
+  })
   const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [isImageUploaded, setIsImageUploaded] = useState(false);
-
+  console.log(imagePreview)
+  const [loading, setloading] = useState(false);
+  
   const handleAddPet = async () => {
     const { name, type, age, medicalHistory, petImage } = petData;
 
-    if (name && type && age && medicalHistory && isImageUploaded) {
-      const reqBody = new FormData();
-      reqBody.append('petName', name);
-      reqBody.append('petType', type);
-      reqBody.append('age', age);
-      reqBody.append('medicalHistory', medicalHistory);
-      reqBody.append('petImage', petImage);
-
-      const token = sessionStorage.getItem('token');
-      if (token) {
-        const reqHeader = {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`,
+    if (name && type && age && medicalHistory && petImage) {
+        const reqBody = {
+            petName: name,
+            petType: type,
+            age,
+            medicalHistory,
+            petImage, // Cloudinary URL
         };
 
-        try {
-          console.log('Request Body:', reqBody);
+        const token = sessionStorage.getItem('token');
+        if (token) {
+            const reqHeader = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            };
 
-          const result = await addPetAPI(reqBody, reqHeader);
-          console.log('API Response:', result);
+            try {
+                const result = await addPetAPI(reqBody, reqHeader);
 
-          if (result.status === 200 || result.status === 201) {
-            alert(`${result?.data?.pet?.petName} added successfully!`);
-
-            // Call fetchPets to refresh the pet list in OwnerDashboard
-            // fetchPets(); 
-             // Now fetchPets is available here
-
-            // Reset the form and close the modal
-            setPetData({
-              name: '',
-              type: '',
-              age: '',
-              medicalHistory: '',
-              petImage: ''
-            });
-            setImagePreview(null);
-            onClose(); // Close the modal
-          } else {
-            alert('Failed to add the pet. Please try again.');
-          }
-        } catch (err) {
-          console.error('Error adding pet:', err);
-          alert('An error occurred. Please check your input or try again later.');
+                if (result.status === 200 || result.status === 201) {
+                    alert(`${result?.data?.pet?.petName} added successfully!`);
+                    setPetData({
+                        name: '',
+                        type: '',
+                        age: '',
+                        medicalHistory: '',
+                        petImage: ''
+                    });
+                    setImagePreview(null);
+                    onClose();
+                } else {
+                    alert('Failed to add the pet. Please try again.');
+                }
+            } catch (err) {
+                console.error('Error adding pet:', err);
+                alert('An error occurred. Please try again.');
+            }
+        } else {
+            alert('Authentication failed. Please log in again.');
         }
-      } else {
-        alert('Authentication failed. Please log in again.');
-      }
     } else {
-      alert('Please fill in all fields and upload a photo.');
+        alert('Please fill in all fields and upload a photo.');
     }
-  };
+};
+
+
 
   const handleImage = async (event) => {
-    setLoading(true);
+    setloading(true);
     const file = event.target.files[0];
     console.log("File uploaded:", event.target.files);
     if (!file) return;
-    const data = new FormData();
-    console.log("mm", file);
 
+    const data = new FormData();
     data.append("file", file);
     data.append("upload_preset", "ml_default");
     data.append("cloud_name", "dybaof8hd");
 
-    const res = await fetch("https://api.cloudinary.com/v1_1/dybaof8hd/image/upload", {
-      method: "POST",
-      body: data
-    });
+    try {
+        const res = await fetch("https://api.cloudinary.com/v1_1/dybaof8hd/image/upload", {
+            method: "POST",
+            body: data,
+        });
 
+        const uploadedImageUrl = await res.json();
+        console.log("Uploaded Image URL:", uploadedImageUrl.url);
 
-    const uploadedImageUrl = await res.json();
-    console.log("hi heloooo", uploadedImageUrl.url);
-    setPetData({ ...petData, petImage: uploadedImageUrl.url });
-    setImagePreview(uploadedImageUrl.url);
-    setIsImageUploaded(true);
-    setLoading(false);
-  };
-
-  useEffect(()=>{
-    // getPetAPI();
-    },[] ) 
-    const getPetAPI = async () => {
-   
-  
-      const token = sessionStorage.getItem('token');
-      if (token) {
-        const reqHeader = {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`,
-        };
-
-        try {
-
-          const result = await addPetAPI( reqHeader);
-          console.log('API Response:', result);
-
-          if (result.status === 200 || result.status === 201) {
-            result.data.forEach((index,pet) => {
-              <PetCard key={index} pet={pet} />
-            }
-            );
-
-          
-          } else {
-            alert('Failed to add the pet. Please try again.');
-          }
-        } catch (err) {
-          console.error('Error adding pet:', err);
-          alert('An error occurred. Please check your input or try again later.');
-        }
-      } else {
-        alert('Authentication failed. Please log in again.');
-      }
+        // Update state with the Cloudinary URL
+        setPetData((prev) => ({ ...prev, petImage: uploadedImageUrl.url }));
+        setImagePreview(uploadedImageUrl.url);
+    } catch (error) {
+        console.error("Error uploading image to Cloudinary:", error);
+        alert("Image upload failed. Please try again.");
+    } finally {
+        setloading(false);
     }
+};
+
+ 
   
 
   return isOpen ? (
@@ -252,11 +216,13 @@ function AddPetModal({ isOpen, onClose, fetchPets }) {
               handleAddPet();  // Call handleAddPet to submit the form
             }}
             type="button"
-            className={`w-full py-2 px-4 text-white rounded-lg ${isImageUploaded ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600'}`}
+            className="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
             Add Pet
           </button>
         </form>
+      </div>
+      <div>
       </div>
     </div>
   ) : null;

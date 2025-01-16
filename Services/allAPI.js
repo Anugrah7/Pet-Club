@@ -17,28 +17,23 @@ export const loginAPI = async (reqBody)=>{
 }
 
 //add pet Modal
-export const addPetAPI = async (reqHeader =reqHeader)=>{
-    return await commonAPI("POST",`${SERVER_BASE_URL}/api/add-pet`,reqbody,reqHeader)
+export const addPetAPI = async (reqBody,reqHeader)=>{
+    return await commonAPI("POST",`${SERVER_BASE_URL}/api/add-pet`,reqBody,reqHeader)
 }
 
-export const getPetAPI = async () => {
-    try {
-      const response = await commonAPI("GET", `${SERVER_BASE_URL}/api/get-pet`, {});
-      
-      if (response.status === 200) {
-        return response;
-      } else {
-        console.error("Failed to fetch pets:", response.data);
-        return { status: response.status, data: [] };
-      }
-    } catch (error) {
-      console.error("Error fetching pets:", error);
-      return { status: 500, data: [] };
-    }
-  };
+export const getPetAPI = async (ownerId) => {
+  try {
+    const response = await commonAPI("GET", `${SERVER_BASE_URL}/api/get-pet/${ownerId}`, {});
+    return response; // Return the full response object (includes status and data)
+  } catch (error) {
+    console.error("Error fetching pets:", error);
+    throw error; // Throw the error for handling in the calling function
+  }
+};
 
-  export const addBookingAPI = async (reqbody,reqHeader =reqHeader)=>{
-    return await commonAPI("POST",`${SERVER_BASE_URL}/api/add-booking`,reqbody,reqHeader)
+
+  export const addBookingAPI = async (reqBody,reqHeader =reqHeader)=>{
+    return await commonAPI("POST",`${SERVER_BASE_URL}/api/add-booking`,reqBody,reqHeader)
   }
 
   export const getBookingAPI = async (reqBody,reqHeader)=>{
@@ -46,4 +41,7 @@ export const getPetAPI = async () => {
   }
   
   
-
+//removePet
+export const removePetAPI = async (id,reqHeader)=>{
+    return await commonAPI("DELETE",`${SERVER_BASE_URL}/api/remove-pet/${id}`,{},reqHeader)
+}

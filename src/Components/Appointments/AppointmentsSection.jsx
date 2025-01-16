@@ -10,9 +10,9 @@ function AppointmentsSection({ appointments }) {
         <h2 className="text-lg font-semibold">Upcoming Appointments</h2>
       </div>
       <div className="space-y-4">
-        {appointments.map((appointment) => (
+        {/* {appointments.map((appointment) => (
           <AppointmentCard key={appointment.id} appointment={appointment} />
-        ))}
+        ))} */}
       </div>
     </div>
   );
