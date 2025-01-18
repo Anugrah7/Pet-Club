@@ -10,13 +10,17 @@ const Auth = () => {
   const [role, setRole] = useState(null); // Capture selected role
   const [isLoading, setIsLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
-
+  
   const [userInput, setUserInput] = useState({
     username: "",
     email: "",
     password: ""
   });
   console.log(userInput);
+
+  const [selectedServices, setSelectedServices] = useState([]); 
+
+  const serviceOptions = ["grooming", "veterinary", "training"];
   
 
   // Role selection handler
@@ -25,35 +29,52 @@ const Auth = () => {
     console.log(`Role Selected: ${selectedRole}`);
   };
 
-  // Sign-Up API Call
+  const toggleServiceSelection = (service) => {
+    setSelectedServices((prev) =>
+      prev.includes(service)
+        ? prev.filter((s) => s !== service) // Remove if already selected
+        : [...prev, service] // Add if not selected
+    );
+  };
+
+
   const register = async (e) => {
     e.preventDefault();
     if (userInput.username && userInput.password && userInput.email && role) {
-        try {
-            setIsLoading(true);
+      if (role === "provider" && selectedServices.length === 0) {
+        alert("Please select at least one service!");
+        return;
+      }
 
-            console.log("Request Body:", { ...userInput, role });
-            const result = await registerAPI({ ...userInput, role });
-            console.log("Registration Result:", result);  // Add a log for debugging
+      try {
+        setIsLoading(true);
 
-            if (result && result.status === 200) {  // Ensure result is defined before checking status
-                alert(`Welcome ${result.data?.username}, Please log in to explore our Projects`);
-                setIsSignUp(false); // Switch to Log-In
-                setRole(null); // Reset role
-                setUserInput({ username: "", email: "", password: "" }); // Reset fields
-            } else {
-                alert(result?.response?.data || "Registration failed.");
-            }
-        } catch (err) {
-            console.error("Error during registration:", err);  // Log the error for debugging
-            alert("An error occurred during registration. Please try again.");
-        } finally {
-            setIsLoading(false);
+        const requestBody = {
+          ...userInput,
+          role,
+          services: role === "provider" ? selectedServices : [],
+        };
+
+        const result = await registerAPI(requestBody);
+        if (result && result.status === 200) {
+          alert(`Welcome ${result.data?.username}, Please log in to explore our Projects`);
+          setIsSignUp(false); // Switch to Log-In
+          setRole(null); // Reset role
+          setSelectedServices([]); // Reset services
+          setUserInput({ username: "", email: "", password: "" }); // Reset fields
+        } else {
+          alert(result?.response?.data || "Registration failed.");
         }
+      } catch (err) {
+        alert("An error occurred during registration. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-        alert("Please fill out all fields, including selecting a role!");
+      alert("Please fill out all fields, including selecting a role!");
     }
-};
+  };
+
 
 
   // Log-In API Call
@@ -159,6 +180,29 @@ const Auth = () => {
                   className="w-full rounded-lg border border-gray-300 p-2"
                 />
               </div>
+               {/* Services for Providers */}
+               {role === "provider" && (
+                <div>
+                  <p className="text-lg font-medium text-gray-700 mb-2">Select Services:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {serviceOptions.map((service) => (
+                      <button
+                        type="button"
+                        key={service}
+                        onClick={() => toggleServiceSelection(service)}
+                        className={`px-3 py-1 rounded-lg border ${
+                          selectedServices.includes(service)
+                            ? "bg-indigo-600 text-white"
+                            : "bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {service}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={register}
                 className={`w-full rounded-lg shadow-md bg-indigo-600 py-2 text-white transition-transform ${
