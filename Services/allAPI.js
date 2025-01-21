@@ -32,8 +32,9 @@ export const getPetAPI = async (ownerId) => {
 };
 
 
-  export const addBookingAPI = async (reqBody,reqHeader =reqHeader)=>{
+  export const addBookingAPI = async (reqBody,reqHeader)=>{
     return await commonAPI("POST",`${SERVER_BASE_URL}/api/add-booking`,reqBody,reqHeader)
+    
   }
 
   export const getBookingAPI = async (reqBody,reqHeader)=>{
@@ -44,4 +45,15 @@ export const getPetAPI = async (ownerId) => {
 //removePet
 export const removePetAPI = async (id,reqHeader)=>{
     return await commonAPI("DELETE",`${SERVER_BASE_URL}/api/remove-pet/${id}`,{},reqHeader)
+}
+
+//getServices
+
+export const getServicesAPI = async(reqHeader)=>{
+  return await commonAPI("GET",`${SERVER_BASE_URL}/api/get-services`,reqHeader)
+}
+//getProviders
+
+export const getProvidersAPI = async(reqHeader)=>{
+  return await commonAPI("GET",`${SERVER_BASE_URL}/api/get-providers`,reqHeader)
 }

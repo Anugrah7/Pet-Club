@@ -1,27 +1,71 @@
-import React, { useState } from 'react';
-import { addBookingAPI } from '../../../Services/allAPI';
+import React, { useState, useEffect } from 'react';
+import { getServicesAPI, getProvidersAPI, addBookingAPI } from '../../../Services/allAPI'; // Assuming these are the correct API imports
 
-function BookAppointment({ providers = [], services = [],  }) {
+function BookAppointment() {
   const [selectedService, setSelectedService] = useState('');
   const [selectedProvider, setSelectedProvider] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
+  const [services, setServices] = useState([]);
+  const [providers, setProviders] = useState([]);
 
-  const   handleSubmit  = async () => {
-    const appointment = {
-      service: selectedService,
-      provider: selectedProvider,
-      date: new Date(`${selectedDate}T${selectedTime}:00.000Z`).toISOString(),
-      time: selectedTime,
-      bookingStatus: 0
+  // Fetch services and providers on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Get the token
+        const token = sessionStorage.getItem('token');
+        const reqHeader = {
+          'Authorization': `Bearer ${token}`,
+        };
+
+        // Fetch services
+        const serviceResponse = await getServicesAPI(reqHeader);
+        setServices(serviceResponse.data); // Assuming the response has the data
+
+        // Fetch providers
+        const providerResponse = await getProvidersAPI(reqHeader);
+        setProviders(providerResponse.data); // Assuming the response has the data
+      } catch (error) {
+        console.error('Failed to fetch services or providers:', error);
+      }
     };
-const token = sessionStorage.getItem('token');
 
+    fetchData();
+  }, []);
+
+  
+
+  const filteredProviders = providers.filter(provider => 
+    provider.services.includes(selectedService)
+  );
+  
+  console.log(filteredProviders);
+  
+  const handleSubmit = async () => {
+    const appointment = {
+      service: [selectedService],
+      provider: selectedProvider, // providerId (from selected provider)
+      date: new Date(`${selectedDate}T${selectedTime}:00.000Z`).toISOString(), // Combined date and time
+      time: selectedTime,
+      bookingStatus: 0, // Default status
+    };
+
+    if (!selectedService) {
+      alert('Please select a service.');
+      return;
+  }
+
+    console.log("Submitting booking:",appointment);
+    
+
+    const token = sessionStorage.getItem('token');
     const reqHeader = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     };
-    const result = await addBookingAPI(appointment,reqHeader); 
+
+    const result = await addBookingAPI(appointment, reqHeader);
 
     if (result.status === 200 || result.status === 201) {
       alert('Appointment booked successfully!');
@@ -30,34 +74,12 @@ const token = sessionStorage.getItem('token');
     }
   };
 
-  // Define available services (this can come from props or backend)
-  const availableServices = [
-    { id: 1, name: 'Grooming' },
-    { id: 2, name: 'Veterinary' },
-    { id: 3, name: 'Training' },
-  
-  ];
-
-  // Define available providers, with each provider linked to a specific service type
-  const availableProviders = [
-    { id: 1, name: 'John\'s Dog Grooming', serviceType: 'Grooming' },
-    { id: 2, name: 'Happy Tails Vet Clinic', serviceType: 'Veterinary' },
-    { id: 3, name: 'Pawsitive Pup Training', serviceType: 'Training' },
-    { id: 4, name: 'Mobile Grooming Express', serviceType: 'Grooming' },
-    { id: 5, name: 'Canine Care Vet', serviceType: 'Veterinary' },
-    { id: 6, name: 'Behavioral Paws Training', serviceType: 'Training' },
-  ];
-
-  // Filter providers based on the selected service
-  const filteredProviders = availableProviders.filter(
-    (provider) => provider.serviceType === selectedService
-  );
-
   return (
-    <div className="p-10 bg-indigo-500 shadow-md  rounded-lg max-w-2xl mx-auto mt-10">
+    <div className="p-10 bg-indigo-500 shadow-md rounded-lg max-w-2xl mx-auto mt-10">
       <h2 className="text-4xl font-bold text-white mb-4">Book an Appointment</h2>
 
-      <div className="mb-4 ">
+      {/* Service Dropdown */}
+      <div className="mb-4">
         <label className="block text-lg text-white">Service:</label>
         <select
           className="w-full px-4 py-2 border rounded-md"
@@ -65,14 +87,15 @@ const token = sessionStorage.getItem('token');
           onChange={(e) => setSelectedService(e.target.value)}
         >
           <option value="">Select Service</option>
-          {availableServices.map((service) => (
-            <option key={service.id} value={service.name}>
+          {services.map((service) => (
+            <option key={service._id} value={service._id}>
               {service.name}
             </option>
           ))}
         </select>
       </div>
 
+      {/* Provider Dropdown */}
       <div className="mb-4">
         <label className="block text-lg text-white">Provider:</label>
         <select
@@ -84,7 +107,7 @@ const token = sessionStorage.getItem('token');
           <option value="">Select Provider</option>
           {filteredProviders.length > 0 ? (
             filteredProviders.map((provider) => (
-              <option key={provider.id} value={provider.name}>
+              <option key={provider._id} value={provider._id}> {/* Use provider _id for API */}
                 {provider.name}
               </option>
             ))
@@ -94,6 +117,7 @@ const token = sessionStorage.getItem('token');
         </select>
       </div>
 
+      {/* Date Input */}
       <div className="mb-4">
         <label className="block text-lg text-white">Date:</label>
         <input
@@ -104,6 +128,7 @@ const token = sessionStorage.getItem('token');
         />
       </div>
 
+      {/* Time Input */}
       <div className="mb-4">
         <label className="block text-lg text-white">Time:</label>
         <input
@@ -114,10 +139,11 @@ const token = sessionStorage.getItem('token');
         />
       </div>
 
+      {/* Submit Button */}
       <button
         onClick={handleSubmit}
         className="w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition duration-300"
-        disabled={!selectedProvider || !selectedDate || !selectedTime} // Disable the button if not all fields are filled
+        disabled={!selectedProvider || !selectedDate || !selectedTime} // Disable button if not all fields are filled
       >
         Book Appointment
       </button>

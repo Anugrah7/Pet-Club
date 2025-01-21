@@ -20,7 +20,7 @@ const Auth = () => {
 
   const [selectedServices, setSelectedServices] = useState([]); 
 
-  const serviceOptions = ["grooming", "veterinary", "training"];
+  const serviceOptions = ["Grooming", "Veterinary", "Training"];
   
 
   // Role selection handler
