@@ -31,10 +31,10 @@ function App() {
   
       console.log('Owner Id:', ownerId);
   
-      if (!ownerId) {
-        alert("Owner ID is missing. Please log in again.");
-        return;
-      }
+      // if (!ownerId) {
+      //   alert("Owner ID is missing. Please log in again.");
+      //   return;
+      // }
   
       try {
         const response = await getPetAPI(ownerId); // API call to fetch pets

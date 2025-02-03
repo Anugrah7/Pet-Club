@@ -40,32 +40,38 @@ const Auth = () => {
 
   const register = async (e) => {
     e.preventDefault();
+  
     if (userInput.username && userInput.password && userInput.email && role) {
       if (role === "provider" && selectedServices.length === 0) {
         alert("Please select at least one service!");
         return;
       }
-
+  
       try {
         setIsLoading(true);
-
+  
+        // Prepare request body
         const requestBody = {
           ...userInput,
           role,
-          services: role === "provider" ? selectedServices : [],
+          // Only include services if the role is "provider"
+          services: role === "provider" ? selectedServices : undefined,
         };
-
+  
         const result = await registerAPI(requestBody);
-        if (result && result.status === 200) {
+
+        if (result && (result.status === 200 || result.status === 201)) {
           alert(`Welcome ${result.data?.username}, Please log in to explore our Projects`);
           setIsSignUp(false); // Switch to Log-In
           setRole(null); // Reset role
           setSelectedServices([]); // Reset services
           setUserInput({ username: "", email: "", password: "" }); // Reset fields
         } else {
+          console.error("API Error:", result);
           alert(result?.response?.data || "Registration failed.");
         }
       } catch (err) {
+        console.error('Request Error:', err); // Log the error
         alert("An error occurred during registration. Please try again.");
       } finally {
         setIsLoading(false);
@@ -74,7 +80,7 @@ const Auth = () => {
       alert("Please fill out all fields, including selecting a role!");
     }
   };
-
+  
 
 
   // Log-In API Call

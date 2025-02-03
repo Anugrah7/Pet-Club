@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import SidebarProvider from '../Components/Sidebar/SidebarProvider'; // Ensure the correct path to your SidebarProvider component
 
 const ProviderDashboard = () => {
+
+  const [username,SetUsername] = useState("")
+  
+    useEffect(()=>{
+      if(sessionStorage.getItem("user")){
+      SetUsername(JSON.parse(sessionStorage.getItem("user")).username.split(" ")[0])
+      }  
+    },[])
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -10,7 +19,7 @@ const ProviderDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 p-6 ml-64">
         <header className="bg-white shadow-md rounded-lg p-4 mb-6">
-          <h1 className="text-2xl font-bold text-indigo-700">Provider Dashboard</h1>
+          <h1 className="text-2xl font-bold text-indigo-700">{username}'s Dashboard</h1>
           <p className="text-sm text-gray-500">Welcome to your dashboard. Manage your services, bookings, and notifications here.</p>
         </header>
 

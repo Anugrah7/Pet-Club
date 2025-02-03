@@ -35,13 +35,18 @@ const commonAPI = async (httpMethod, url, reqBody = {}, reqHeader = {}) => {
             data: reqBody,
             headers: reqHeader,
         });
-
+    
         console.log("API Response:", response);
-
-        return response;
+        
+        // Handle successful responses (201, 200)
+        if (response.status === 200 || response.status === 201) {
+            return response;
+        } else {
+            throw new Error(`Unexpected response: ${response.statusText}`);
+        }
     } catch (error) {
-        console.error("API Request failed:", error.response || error);  // Log the error response
-        throw error; // Propagate the error for handling in the calling code
+        console.error("API Request failed:", error.response?.data || error.message);
+        throw error.response?.data || error.message;
     }
 };
 

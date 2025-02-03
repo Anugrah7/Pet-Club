@@ -6,9 +6,10 @@ const reqHeader = {
   'Authorization': `Bearer ${token}`,
 };
 //register API
-export const registerAPI = async (reqBody)=>{
-    return await commonAPI("POST",`${SERVER_BASE_URL}/api/register`,reqBody)
-}
+export const registerAPI = async (reqBody) => {
+
+  return await commonAPI("POST", `${SERVER_BASE_URL}/api/register`, reqBody);
+};
 
 //login API
 
@@ -57,3 +58,20 @@ export const getServicesAPI = async(reqHeader)=>{
 export const getProvidersAPI = async(reqHeader)=>{
   return await commonAPI("GET",`${SERVER_BASE_URL}/api/get-providers`,reqHeader)
 }
+
+// Create a new community post
+export const createPostAPI = async (reqBody) => {
+  return await commonAPI("POST", `${SERVER_BASE_URL}/api/community-add`, reqBody);
+};
+
+// Fetch all community posts
+export const getAllPostsAPI = async () => {
+  const token = sessionStorage.getItem('token');
+  return await commonAPI("GET", `${SERVER_BASE_URL}/api/community-get`,{},{
+      'Authorization': `Bearer ${token}`
+  });
+};
+
+export const postCommentAPI = async (postId, reqBody) => {
+  return await commonAPI("POST", `${SERVER_BASE_URL}/api/community-comment/${postId}`, reqBody);
+};
